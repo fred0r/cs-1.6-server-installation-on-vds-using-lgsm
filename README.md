@@ -1,213 +1,218 @@
-# Установка и первичная настройка игрового сервера Counter-strike на VDS
+# Installation and initial configuration of the Counter-strike game server on a vServer
 
-## Часть 0. Предисловие
+## Part 0. Foreword
 
 ### Copyright ©
-Данная статья написана лично мной с использованием моего личного опыта и открытых источников, ссылки на которые я предоставляю в конце каждого раздела.
-Распространение данной статьи запрещено без указания ссылки на первоисточник и никнейма (контакта) автора.
-Первоисточником считать: [Nord1cWarr1or/cs-1.6-server-installation-on-vds-using-lgsm (github.com)](https://github.com/Nord1cWarr1or/cs-1.6-server-installation-on-vds-using-lgsm)
-Автор: Nordic Warrior. (Telegram: @NordicWarrior)
-Дата написания: октябрь-ноябрь 2021 г.
+This article was written by me personally using my personal experience and public sources that I provide links to at the end of each section. <br />
+Distribution of this article is forbidden without reference to the original source and author's nickname (contact).<br />
+The primary source is:<br /> [Nord1cWarr1or/cs-1.6-server-installation-on-vds-using-lgsm (github.com)](https://github.com/Nord1cWarr1or/cs-1.6-server-installation-on-vds-using-lgsm)<br />
+Author: Nordic Warrior. (Telegram: @NordicWarrior)<br />
+Date of writing: October-November 2021.
 
-### Пара слов от автора
-На написание данной статьи меня сподвигло отсутствие таковых подробных статей и инструкций по установке сервера на конец 2021 года.
-Всё, что мне удавалось найти либо устарело, либо не было достаточно подробным или рассматривало только какой-то один процесс в установке сервера. Я решил сделать единый гайд, с актуальными сведениями, полностью подробный и понятный даже для незнакомых с этой сферой людей.
+### A few words from the author
+My motivation me to write this article was the lack of any detailed articles and instructions on setting up a server by the end of 2021.<br />
+Everything I could find was either outdated, not detailed enough or focused on a single process in the server setup. so I decided to make a single guide with up-to-date information - fully detailed and understandable even for people unfamiliar with this field.
 
-***Примечание***: Я буду рассматривать только установку на ОС Linux, и даже более конкретно, Debian. Я привык работать с ней, а команды на других основных дистрибутивах различаются незначительно, поэтому нет смысла растягивать статью. Так же я буду использовать только скрипт LGSM, поскольку считаю его самым эффективным бесплатным инструментом для управления сервером Counter-strike 1.6.
+***Note***:<br /> It will only cover installation on Linux, and even more specifically on [Debian](https://www.debian.org/).<br /> I am used to working with it and the commands on the other major distributions differ slightly, so there is no point in stretching the article.<br /> The installation will be done by using the [LGSM](https://linuxgsm.com/) script, because it's the best free tool for Counter-strike 1.6 server management.
 
-### Софт, который нам понадобится: 
-1. FTP клиент. Я пользуюсь [FileZilla](https://filezilla-project.org/)
-2. SSH клиент. Я пользуюсь [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/)
-3. (Опционально) Хороший текстовый редактор. Я использую [Notepad++ (notepad-plus-plus.org)](https://notepad-plus-plus.org/)
+### Software we will need:
+1. FTP client. I use [FileZilla](https://filezilla-project.org/)
+2. SSH Client. I use [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/)
+3. (Optional) A good text editor. Peronally I prefer [Notepad++](https://notepad-plus-plus.org/)
 
-Вы можете использовать те решения, что нравятся вам.
+## Part 1. Initial system setup
+### Choosing a host...
+...I leave it up to you. There are many hosting companies and they differ in price, equipment, location and so on.<br />
+There is no point in discussing this aspect here. Some even use their own server at home...
 
-## Часть 1. Первичная настройка системы
-### Выбор хостинга...
-...я возлагаю на вас самих. Существует великое множество хостингов, разнящихся ценами, оборудованием, локацией и т.п. Рассматривать этот аспект здесь нет никакого смысла. Кто-то вообще содержит свой собственный домашний сервер.
+The approximate characteristics of the Vserver should be:
+- Processor: I recommend 2.5-3.5 GHz, 1 core per server. if you are going to run two servers, order two cores, etc.
+- RAM: 2gb if you are going to install a http server and a MySQL database on two cores, otherwise 1gb will be enough.
+- Hard disk (or SSD): 10gb is enough for 1-2 servers.
 
-Скажу лишь примерные характеристики виртуальной машины, на которые вам желательно ориентироваться.
-- Процессор: рекомендую 2.5-3.5 ГГц, 1 ядро под каждый сервер. То есть если вы собираетесь держать два сервера, заказываете 2 ядра и т.д.
-- Оперативная память: 2гб, если вы собираетесь устанавливать http сервер и базу данных MySQL, в противном случае хватит и 1гб.
-- Жёсткий диск (или SSD): 10гб вполне хватит на 1-2 сервера.
+### Data and input
+So we decided on a web hosting and rented a server. Some webhosts require you to manually start the installation of the system.<br />
+To begin, go into the server control panel and look there for the data to connect to it. We are interested in the SSH connection and the IP address of the server.<br />
+After we have the data (I recommend writing it down somewhere safe, such as a text document), open PuTTY and add the connection to our server there. Type of connection is SSH, enter the IP and password of your server.<br />
+Connect!
 
-### Данные и вход
-Итак, мы определились с выбором хостинга и арендовали сервер. На некоторых хостингах требуется вручную начать установку системы.
+Login with your SSH<br />This brings us to our account login page. We open the data we wrote down a minute ago and log in.
 
-Для начала, заходим в панель управления сервером и ищем там данные для подключения к нему. Нас интересует подключение по SSH и IP-адрес сервера.
-
-После того как мы получили данные (рекомендую их записать куда-нибудь в надёжное место, например создать текстовый документ), открываем PuTTY и добавляем туда подключение к нашему серверу. Тип соединения ставим SSH, вводим IP и пароль нашего сервера. Подключиться!
-
-Мы попадаем на страницу входа в аккаунт. Открываем данные, которые мы записали минуту назад и заходим.
-
-### Подготовка виртуальной машины
-После того как мы вошли в учётную запись root, и перед тем, как мы приступим к первичной настройке виртуальной машины, необходимо обновить весь имеющийся у нас софт. Вводим в консоль:
+### Preparing the Vserver
+Once we are logged into the root account, and before we start the initial setup of the vServer, we should update all packages with:
 ```
 apt update && apt full-upgrade
 ```
-и дожидаемся окончания выполнения команд.
 
-***Примечание***: Если на вашем хостинге недоступна последняя версия дистрибутива ОС, и стоит, например Debian 10, то `apt update` может выдать вам следующее:
+and wait for the commands to complete.
+
+***Note***: If your webhost does not have the latest OS distribution and you run, for example, Debian 11, then `apt update` may give you the following output:
 ```
 E: Repository 'http://security.debian.org/debian-security buster/updates InRelease' changed its 'Suite' value from 'stable' to 'oldstable'
 N: This must be accepted explicitly before updates for this repository can be applied. See apt-secure(8) manpage for details.
 ```
-Здесь система сообщает нам о том, что репозитории поменяли свою метку со stable на oldstable и предложит согласиться с изменениями: `Do you want to accept these changes and continue updating from this repository? [y/N]`. Соглашаемся, жмём enter, пока не начнётся установка.
+Here, the system will tell us that the repositories have changed their label from stable to oldstable and ask you to accept the change: 
+`Do you want to accept these changes and continue updating from this repository? [y/N]`
 
-### Добавление пользователя
-Теперь приступим к первичной настройке виртуальной машины.
-Для начала, нам нужно создать нового пользователя и наделить его правами администратора, так как не рекомендуется работать из-под root пользователя в целях безопасности.
-Вводим `adduser имя_пользователя`. Например:
+Accept and press enter until the installation starts.
+
+### Adding a user
+Now we will go through the initial configuration of the Vserver.
+First, we have to create a new user and give it administrator privileges, because it is not recommended to run as root for security reasons.
+Type `adduser username`. For example:
 ```
 adduser public_server
 ```
-Система попросит нас ввести поочерёдно пароль для пользователя, затем подтверждение пароля. Дальше нас просят ввести информацию о пользователе, но это делать совершенно не обязательно. Нажимаем последовательно enter, дожидаясь вопроса `Is the information correct? [Y/n]`, и вводим Y, enter.
+The system will ask us to enter, one by one, the password for the user, then confirm the password. Next, we are asked to enter the user information, but this is completely optional. Press enter one by one, waiting for the question `Is the information correct? [Y/n]`, then enter Y, enter.
 
-Установим пакет **sudo**, отвечающий за выполнение администраторских команд не от **root** юзера.
+Install package **sudo**, which is responsible for executing administrator commands not from a **root** user.
 ```
 apt install sudo
 ```
-Далее предоставим новоиспечённому пользователю права администратора. 
-Вписываем `usermod -aG sudo имя_пользовтеля`. У нас это:
+Next, let's give the new user admin rights. 
+Type ``usermod -aG sudo username``. We have it:
 ```
 usermod -aG sudo public_server
 ```
 
-### Настройка брандмауэра (UFW)
-Следующим шагом выполним установку и базовую настройку брандмауэра.
-Те, кто хочет использовать другие решения по защите сети, например iptables или защиту от хостинга, могут пропустить этот шаг.
+### Configuring the firewall (UFW)
+The next step is to do the installation and basic configuration of the firewall.
+Those who want to use other network protection solutions, like iptables or hosting protection, can skip this step.
 
-Для начала установим пакет `UFW`. Вписываем в терминал:
+First, we will install the `UFW` package. Type in the terminal:
 ```
 apt install ufw
 ```
-Это и есть наш брандмауэр. Переходим к его настройке.
-Для начала запретим все входящие соединения и разрешим исходящие. Выполняем команду:
+This is our firewall. We will now proceed to configure it.
+First, we will prohibit all incoming connections and allow outgoing ones.<br /> Execute the command:
 ```
 ufw default deny incoming && ufw default allow outgoing
 ```
-Теперь нам надо разрешить те входящие соединения, которые потребуются нам для корректной работы сервера.
-Прежде всего разрешим SSH, так как это, собственно, доступ к терминалу сервера. Вводим:
+Now, we need to allow incoming connections, which we need for the server to work properly.
+First of all, we should allow SSH, since this is actually access to the terminal on the server. Enter:
 ```
 ufw allow ssh
 ````
-Затем разрешим http соединения, которые понадобятся для быстрой загрузки (и работы веб-дополнений).
+Then allow http connections which we need for fast downloads (and web extensions).
 ```
 ufw allow http
 ```
-Те, кто собирается организовывать, например, полноценный форум или сайт, скорее всего будут использовать протокол с шифрованием, так что им следует разрешить ещё и https:
+Those who are going to organize a full-fledged forum or a website, for example, will probably use an encrypted protocol, so they should allow https as well:
 ```
 ufw allow https
 ```
-И конечно же, нам потребуется разрешить входящие соединения на порт, который будет использовать игровой сервер. У меня это стандарт - 27015. Выполняем:
+And of course, we need to allow incoming connections on the port that the game server will use. In my case this is the standard - 27015. Execute:
 ```
 ufw allow 27015
 ```
-Теперь активируем брандмауэр командой:
+Now activate the firewall with the command:
 ```
 ufw enable
 ```
-Система предупредит вас, что активация может прервать соединение, но поскольку мы настроили всё правильно, соглашаемся, нажав Y и enter.
+The system will warn you that activation may interrupt the connection, but since we have configured everything correctly, we agree by pressing Y and enter.
 
-На этом настройка брандмауэра окончена. Если вы сомневаетесь в её правильности, проверить можно, выполнив команду `ufw status verbose`. Если защита включена, вы получите список разрешающих/запрещающих правил.
+This completes the firewall configuration. If you doubt its validity, you can verify it by running the `ufw status verbose` command. If the firewall is enabled, you will get a list of allow/deny rules.
 
-На всякий случай приведу здесь базовые команды для отключения/сброса брандмауэра.
-- `ufw disable` - отключение.
-- `ufw reset` - сброс.
-- `ufw status numbered` - вывод списка активных правил и их номеров.
-- `ufw delete номер_правила` - удаление определённого правила по его номеру.
+Just in case, here are some basic commands to disable/reset the firewall.
+- `ufw disable` - disabling.
+- `ufw reset` - reset.
+- `ufw status numbered` - displays a list of active rules and their numbers.
+- `ufw delete rule number` - deletes a certain rule by its number.
 
-#### Литература
-- [Настройка брандмауэра с UFW в Debian 9 | DigitalOcean](https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-debian-9-ru)
+#### Literature
+- [Configuring a firewall with UFW in Debian 11 | DigitalOcean](https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-debian-11-243261243130246d443771547031794d72784e6b36656d4a326e49732e)
 
-## Часть 2. Установка и настройка скрипта LGSM
-Теперь переходим к мозгу нашего будущего сервера: скрипту, управляющему сервером.
+## Part 2. Installing and configuring the LGSM script
+Now on to the brain of our future server: the script that runs the server.
 
-### Установка LGSM
+### Installing LGSM
 
-#### Установка зависимостей
-Переходим в пользователя, которого мы создали на предыдущем этапе: `su - public_server`.
-Для начала установим зависимости — пакеты, которые требуются для нормальной работы скрипта. Вводим в терминал: 
+#### Dependencies installation
+Let's go into the user we created in the previous step: `su - public_server`.
+Begin by installing the dependencies - packages that are required for the script to work properly. Enter into the terminal: 
 ```
 sudo dpkg --add-architecture i386; sudo apt update; sudo apt install curl wget file tar bzip2 gzip unzip bsdmainutils python util-linux ca-certificates binutils bc jq tmux netcat lib32gcc1 lib32stdc++6
 ```
-Вводим пароль пользователя для подтверждения и ждём завершения.
+Enter the user password to confirm and wait for it to complete.
 
-***Примечание***: на Debian 11 я получил предупреждение о том, что пакет `lib32gcc1` в репозитории был заменён пакетом `lib32gcc-s1`. Если вы получили такое же сообщение, просто замените название пакета в строке выше.
+***Note***: On Debian 11, I received a warning that the `lib32gcc1` package in the repository has been replaced by the `lib32gcc-s1` package. If you get the same message, just replace the package name in the line above.
 
-Далее выполняем команду, загружающую скрипт в текущую папку:
+Next, run the command that loads the script into the current folder:
 ```
 wget -O linuxgsm.sh https://linuxgsm.sh && chmod +x linuxgsm.sh && bash linuxgsm.sh csserver
 ```
 
-##### Литература
+##### Literature
 - [Counter-Strike | LinuxGSM_](https://linuxgsm.com/lgsm/csserver/)
 
-#### (Опционально) Выбираем имя скрипта
-На текущем этапе, если вы хотите задать своё имя скрипта, вместо стандартного `csserver`, это можно легко сделать. В противном случае, этот шаг можно пропустить.
-Ниже по тексту я не буду изменять имя скрипта со стандартного, чтобы не было путаницы.
+#### (Optional) Choose a name for the script
+At this stage, if you want to set your own script name instead of the standard `csserver`, this can easily be done. Otherwise, you can skip this step.
+I will not change the name of the script from the standard one below so that there is no confusion.
 
-Чтобы переименовать скрипт, воспользуйтесь командой `mv`:
+To rename the script, use the `mv` command:
 ```
-mv csserver новое_имя
+mv csserver new_name
 ```
-Например: `mv csserver public`.
+For example: ``mv csserver public``.
 
-#### Процесс установки
-Запускаем автоматическую установку командой:
+I will continue with the default `csserver` so that there is no confusion.
+
+#### Installation process
+Start the automatic installation with:
 ```
 ./csserver auto-install
 ```
-Скрипт сам проверит, установлены ли все зависимые компоненты, и если нет, установит их.
-Если установка скрипта и сервера прошла успешно, вы получите соответствующую надпись об этом.
+The script will automatically check if all the dependent components are installed and if not, install them.
+If the installation of the script and the server was successful, you will get the corresponding inscription about it.
 
-Теперь можно попробовать запустить сервер для проверки.
-Пишем в терминале:
+Now you can try to run the server for testing.
+Write in the terminal:
 ```
 ./csserver start
 ```
-Если всё успешно, можно попробовать подсоединиться к серверу.
-Для подключения используйте IP VDS-сервера и стандартный порт 27015.
+If everything is successful, you can try to connect to the server.
+Use the IP of the Vserver and the standard port 27015.
 
-***Примечание***: на текущем этапе зайти на сервер можно только с лицензионной версии игры.
-***Важно***: выходить из консоли следует **только** через сочетание клавиш `CTRL + B`, затем `D`. Если вы попытаетесь выйти из консоли нажав по обыкновению `CTRL + C`, это завершит процесс сервера.
+***Note***: at this stage, you can only log in to the server from a licensed version of the game.
+***For your information***: you should only **exit the console using the key combination `CTRL + B`, then `D`. If you try to exit the console by pressing the usual `CTRL + C`, this will end the server process.
 
-#### Активация полных краш-логов
-На этом этапе можно сразу же активировать создание полных краш-логов. Иначе если у вас будет падать сервер, вам никто не сможет помочь. Делается это быстро и просто.
+#### Activate full crash logs
+At this point, you can immediately activate the creation of full crash logs. Otherwise, if your server crashes, no one can help you. This is done quickly and easily.
 
-Устанавливаем через терминал пакет gdb, пишем:
+Install package gdb through the terminal, write:
 ```
 apt install gdb
 ```
-Подключаемся к серверу через FileZilla, используя SFTP протокол. Для этого вводим в поле "Хост" адрес вашего сервера, логин и пароль в соответствующие поля (не забываем, что войти нам сейчас надо не за root, а за пользователя, у которого установлен наш скрипт), а в поле "Порт" пишем "22", что соответствует SFTP. Подключаемся.
-Мы попадаем в домашнюю директорию пользователя, в примере я использовал `public_server`.
+Connect to the server via FileZilla, using the SFTP protocol. To do it, enter in the field "Host" the address of your server, username and password in the corresponding fields (don't forget, that we should log in now not as root, but as a user, who has our script installed), and in the field "Port" write "22", that corresponds to SFTP. Let's connect.
+We get into the user's home directory, in the example I used `public_server`.
 
-Далее переходим в папку `serverfiles` через FileZilla и находим здесь файл `hlds_run`.
-Открываем его для редактирования. Поиском находим такую строку:
+Then go to the folder`serverfiles` via FileZilla and find here the file `hlds_run`.
+Open it for editing. Search for the following line:
 ```
 ulimit -c 2000
 ```
-и заменяем 2000 на "unlimited", чтобы получилось так:
+And replace 2000 with "unlimited" to make it look like this:
 ```
 ulimit -c unlimited
 ```
-На этом всё! Сохраняем и закрываем файл.
+That's it! Save and close the file.
 
-##### Литература
-- [Как получить Dump падения HLDS | Dev-CS.ru](https://dev-cs.ru/threads/1532/#post-18163)
 
-### Настройка LGSM
-Теперь можно перейти к настройкам скрипта.
-Первое, что нам нужно сделать, это сконфигурировать основные настройки.
+##### Literature
+- [How to get HLDS Dump | Dev-CS.ru](https://dev-cs.ru/threads/1532/#post-18163)
 
-#### Настройки сервера и скрипта
-Заходим через FTP-клиент в папку `lgsm -> config-lgsm -> csserver`. Здесь хранятся конфиги LGSM.
-Нас интересует конфиг `csserver.cfg`, который отвечает за наш игровой сервер.
-Открываем его и производим первичную настройку.
+### Configuring LGSM
+Now we can move on to the settings of the script.
+The first thing we need to do is configure the basic settings.
 
-Все доступные параметры можно посмотреть в стандартном конфиге `_default.cfg`, который находится в этой же директории. Описания к ним можно прочитать по ссылкам, приведённым в конфиге.
+#### Server and script settings
+Go through an FTP client to the folder `lgsm -> config-lgsm -> csserver`. This is where LGSM configs are stored.
+We are interested in config `csserver.cfg`, which is responsible for our game server.
+Open it and make the initial settings.
 
-Я приведу пример своих настроек.
+All available parameters can be seen in the standard config `_default.cfg`, which is in the same directory. The descriptions to them can be read at the links given in the config.
+
+I will give you an example of my settings.
 ```
 ##################################
 ####### Instance Settings ########
@@ -250,125 +255,125 @@ servercfg="${servercfgdefault}"
 servercfgdefault="server.cfg"
 servercfgfullpath="${servercfgdir}/${servercfg}"
 ```
-Вообще, на мой взгляд здесь интуитивно всё понятно, но всё-таки я считаю должным пройтись по этому конфигу.
-- `ip` - отвечает за IP сервера. Если на предыдущем шаге у вас получилось зайти на сервер, оставьте его в стандартном виде. `0.0.0.0` - обозначает автоматическое определение IP-адреса. В противном случае можно попробовать вставить сюда непосредственно IP сервера.
-- `port` - желаемый порт сервера. Не забываем давать доступ к нему через UFW.
-- `clientport` - клиентский порт. Не трогаем.
-- `defaultmap` - карта, с которой будет стартовать сервер.
-- `maxplayers` - кол-во слотов сервера.
-- `startparameters` - параметры запуска сервера.
-- `maxbackups` - максимальное кол-во хранимых бэкапов сервера.
-- `maxbackupdays` - сколько дней будет храниться каждый бэкап.
-- `stoponbackup` - останавливать ли сервер во время бэкапа. Лучше оставить включённым.
-- `consolelogging` - лог всего происходящего в консоли сервера. На мой взгляд, очень удобная фича, которой не хватает на хостингах.
-- `logdays` - сколько дней будут храниться логи.
-- `systemdir` - директория, где находится корневая папка игрового сервера.
-- `executabledir` - директория, где находится корневая папка самого скрипта.
-- `executable` - название исполняемого файла скрипта. Не рекомендую трогать само название, но сюда можно приписать параметры запуска процесса сервера, например привязку к определённому ядру процессора.
-- `servercfgdir` - директория, где находится конфиг игрового сервера (server.cfg).
-- `servercfg` - название конфига игрового сервера.Здесь я изменил значение на `"${servercfgdefault}"`, чтобы использовать более привычное для CS 1.6 название `server.cfg`. По стандарту здесь указано `"${selfname}.cfg"` - название конфига по имени скрипта. В результате было: `csserver.cfg`.
-- `servercfgdefault` - стандартное название конфига. Не меняем.
-- `servercfgfullpath` - полный путь до конфига сервера.
+In general, in my opinion, everything is intuitively clear here, but still I think it is necessary to go through this configuration.
+- The `ip` is responsible for the IP of the server. If at the previous step you were able to enter the server, leave it in its default form. `0.0.0.0` - stands for automatic detection of the IP address. Otherwise, you can try to put here directly the IP of the server.
+- `port` - the desired port of the server. Do not forget to give access to it via UFW.
+- `clientport` - the client port. Do not touch.
+- `defaultmap` - The map from which the server will start.
+- `maxplayers` - The number of slots on the server.
+- `Startparameters` - Server startup parameters.
+- `maxbackups` - maximum number of stored backups of the server.
+- `maxbackupdays` - how many days each backup will be stored.
+- `stoponbackup` - whether to stop the server during the backup. It is best to leave it on.
+- `consolelogging` - log everything that happens in the console of the server. In my opinion, a very handy feature, which is not enough on the hosting.
+- `logdays` - how many days the logs will be stored.
+- `systemdir` - directory where the root folder of the game server.
+- `executabledir` - directory where the root folder of the script itself is located.
+- `executable` - name of the executable file of the script. I do not recommend to change the name itself, but you can add here startup parameters of the server, such as binding to a specific processor core.
+- `servercfgdir` - directory where the game server config (server.cfg) is located.
+- `servercfg` - name of the game server config. Here I changed the value to `` ${servercfgdefault}`` to use a more familiar name for CS 1.6 `server.cfg`. The standard here is `"${selfname}.cfg"` - the name of the config by the name of the script. The result was: `csserver.cfg`.
+- `servercfgdefault` - standard name of config. Do not change it.
+- `servercfgfullpath` - the full path to the config server.
 
-После того как настроили конфиг, перезапускаем сервер командой `./csserver restart`, чтобы настройки применились.
+After configuring the config, restart the server with the command `./csserver restart`, so that the settings are applied.
 
-#### Команды скрипта
-Лучше всего сразу изучить команды, которыми располагает наш скрипт. Для этого введём `./csserver` - тогда появится список всех команд с их описанием.
+#### Script commands
+It is best to learn right away what commands our script has at its disposal. To do this, type `./csserver` - then a list of all commands will appear with their descriptions.
 
-Я приведу с переводом здесь основные, которые могут нам понадобиться. 
+I am going to translate here some of the main ones that we may need. 
 
-Команда | Сокращение | Описание
+Command | Abbreviation | Description
 -|-|-
-start | st | Запускает сервер
-stop | sp | Останавливает сервер
-restart | r | Перезапускает сервер
-monitor | m | Проверяет доступность сервера и перезапускает его в случае падения
-test-alert | ta | Отправляет тестовое предупреждение (об этом позже)
-details | dt | Показывает основную информацию о сервере
-postdetails | pd | То же, что и предыдущее, только загружает информацию на сервис Termbin (аналог Pastebin) и выдаёт ссылку
-update-lgsm | ul | Проверяет и производит обновление скрипта LGSM
-backup | b | Делает бэкап сервера
-console | c | Открывает консоль игрового сервера
-send | sd | Даёт возможность отправить команду в консоль сервера, не заходя в неё
+start | st | start server
+stop | sp | stop server
+restart | r restarts the server
+monitor | m |- checks the availability of the server and restarts it if it crashes
+test-alert | ta | sends a test warning (more on this later)
+details | dt | shows basic information about the server
+postdetails | pd | the same as the previous one, but it uploads the information to the Termbin service (analogous to Pastebin) and gives a link
+update-lgsm | ul | checks and updates the LGSM script.
+backup | b makes a backup of the server.
+console | c Opens the console of the game server
+send | sd | gives you the ability to send a command to the console of the server without entering it
 
-#### Литература
+#### Literature
 - [Home - LinuxGSM_](https://docs.linuxgsm.com/)
 
-### Настройка расписаний
-Настало время выполнить немаловажную часть нашей работы — настроить расписания для автоматизации важных для работы сервера действий.
+### Configuring Schedules
+Now it's time to do the most important part of our job: configuring the schedules to automate the actions really important for our server.
 
-Сейчас мы установим:
-- Перезагрузку виртуальной машины раз в месяц.
-- Автоматический запуск сервера при включении виртуальной машины.
-- Перезагрузку игрового сервера раз в сутки.
-- Создание резервной копии сервера каждые две недели.
-- "Мониторинг" сервера на предмет падений.
+In a moment we are going to set up:
+- Reboot the Vserver once a month.
+- Automatic start of the server when the Vserver is switched on.
+- Rebooting the game server once a day.
+- Creating a backup copy of the server every two weeks.
+- "Monitoring" the server for crashes.
 
-Приступим.
-Делать будем всё при помощи стандартной утилиты Linux - "crontab".
-Для начала, зайдём в терминале за пользователя root: `su - root`. Вводим пароль. Далее вызываем окно редактирования crontab. Пишем:
+Here we go.
+We will use the standard Linux "crontab" utility.
+First of all, let's login as root in the terminal: `su - root`. We will type in the password. Then we access the crontab edit window. Type:
 ```
 crontab -e
 ```
-Если вы выполняете эту команду впервые на текущей виртуальной машине, система попросит выбрать вас, какой текстовый редактор вы предпочитаете использовать (и если в вашем дистрибутиве установлено несколько редакторов "из коробки"). В моём случае мне предложили **Vim** или **nano**. Всем новичкам я настоятельно рекомендую выбрать именно nano, поскольку Vim имеет весьма специфическое управление.
+If you are running this command for the first time on the current Vserver, the system will ask you to choose which text editor you prefer to use (and if you have more than one installed "out of the box" in your distribution). In my case, I was offered **Vim** or **nano**. For all newbies, I highly recommend choosing nano because Vim has very specific controls.
 
-Итак, вы выбрали редактор и перед вами открылся файл, содержащий cron jobs (именно так они называются). По умолчанию он пуст (не считая "комментариев").
-Обратите внимание, что каждый cron job пишется с новой строки.
+So, you have chosen the editor and a file containing cron jobs (that's what they are called) opens up in front of you. By default it is empty (apart from the "comments").
+Note that each cron job is written on a new line.
 
-Стрелками на клавиатуре опускаем ввод в самый низ.
-Устанавливаем перезагрузку виртуальной машины. Разумнее будет сделать её под утро, когда на сервере низкий онлайн. Я выбрал время 4 утра. 
+Use the arrows on the keyboard to bring the input down to the very bottom.
+Set the reboot of the Vserver. It makes more sense to do it in the morning, when the server is low online. I chose the time 4 am. 
 ```
 0 4 1 * * reboot
 ```
-Нажимаем CTRL + X, система предложит сохранить наш файл с заданиями. Жмём Y.
+Press CTRL + X, the system will offer to save our file with the tasks. Press Y.
 
-Можно проверить, что мы всё сделали правильно, пишем следующую команду:
+We can check if we did it right, by typing the following command:
 ```
 crontab -l
 ```
-которая выведет на экран содержимое файла. Если вы видите в конце строчку, которую только что вписали, значит всё в порядке.
+which will display the content of the file. If you see at the end the line you just typed, then everything is fine.
 
-Далее, для работы с заданиями по игровому серверу, лучше всего использовать юзера, под которым работает наш скрипт. Можно перейти в учётную запись этого юзера и повторить действия выше, а можно просто отредактировать файл заданий того юзера, не выходя с root.
+Next, to work with tasks on the game server, it is best to use the user under which our script runs. You can go to the account of this user and repeat the above steps, or you can simply edit the job file of that user without leaving root.
 
-Пишем:
+Let's write:
 ```
-crontab -u имя_пользователя -e
+crontab -u username -e
 ```
-Откроется такой же самый файл, только в дальнейшем он будет исполняться от нашего пользователя, запускающего LGSM.
+This will open the same file, only later on it will be executed by our user running LGSM.
 
-Настроим автоматический запуск сервера после включения виртуальной машины:
+Let's set up an automatic start of the server after turning on the Vserver:
 ```
 @reboot ./csserver st > /dev/null 2>&1
 ```
-Установим перезагрузку игрового сервера раз в сутки. Опять же, ранним утром:
+Set the game server to reboot once a day. Again, in the early morning hours:
 ```
-0 4 * * * ./csserver r > /dev/null 2>&1
+0 4 * * * * ./csserver r > /dev/null 2>&1
 ```
-Далее зададим резервное копирование раз в две недели (в 04:05, после перезагрузки):
+Next, let's set a bi-weekly backup (at 04:05, after a reboot):
 ```
-5 4 */14 * * ./csserver b > /dev/null 2>&1
+5 4 */14 * * * ./csserver b > /dev/null 2>&1
 ```
-И наконец, добавим мониторинг сервера на доступность.
-Команда `monitor`, которая будет проверять сервер на предмет падений, например, каждые 5 минут:
+Finally, let's add monitoring the server for availability.
+The `monitor` command, which will check the server for crashes, for example every 5 minutes:
 ```
-*/5 * * * * ./csserver m > /dev/null 2>&1
+*/5 * * * * * ./csserver m > /dev/null 2>&1
 ```
+For reference: `> /dev/null 2>&1` is used to lock text output to the screen from running a command.
 
-Для справки: `> /dev/null 2>&1` - используется для блокировки текстового вывода на экран от выполнения команды.
-
-#### Литература
+#### Literature
 - [Home - LinuxGSM_](https://docs.linuxgsm.com/)
-- [Crontab.guru - The cron schedule expression editor](https://crontab.guru/) - неплохой сервис для настройки времени cron'ов.
+- Crontab.guru - The cron schedule expression editor (https://crontab.guru/) - good service for setting the time of a cron.
 
-## Часть 3. Установка основных дополнений. Настройка игрового сервера
-Теперь пришло время заняться самим игровым сервером. И начнём мы с движка.
+## Part 3. Installing the main add-ons. Game server setup
+Now it's time to take care of the game server itself. So let's start with the engine.
 
-### Установка ReHLDS
-Переходим по ссылке: [Releases · dreamstalker/rehlds (github.com)](https://github.com/dreamstalker/rehlds/releases). Скачиваем и устанавливаем последний релиз.
+### Installing ReHLDS.
+Click on the link: [Releases - dreamstalker/rehlds (github.com)](https://github.com/dreamstalker/rehlds/releases). Download and install the latest release.
 
-Установка предельна проста: выключаем наш сервер командой `./csserver sp` и просто загружаем файлы через FileZilla в *корневую папку сервера* (то есть /serverfiles), заменяя текущие. Включаем сервер, заходим в консоль и проверяем версию командой `version`.
+Installation is extremely simple: switch off our server with command
+`./csserver sp` and just upload files via FileZilla to *the root server folder* (i.e. /serverfiles), replacing the current ones. Turn on the server, go to the console and check the version with the `version` command.
 
-На момент написания статьи я получаю такой вывод:
+At the time of writing I get the following output:
 ```
 Protocol version 48
 Exe version 1.1.2.7/Stdio (cstrike)
@@ -377,167 +382,169 @@ Build date: 03:13:55 Oct 25 2021 (2753)
 Build from: https://github.com/dreamstalker/rehlds/commit/471158b
 ```
 
-#### Создание и настройка конфига
-Поскольку ReHLDS не имеет собственного конфига, мы создадим его своими руками. Переходим в папку cstrike и создаем файл `rehlds.cfg`. Открываем его, и вписываем туда те квары[^1], которые привносит в движок именно ReHLDS. И добавим строчку, которая будет выводиться в консоль при чтении конфига.
+#### Creating and configuring a config
+Since ReHLDS does not have its own config file, we will create it with our own hands. Go to the cstrike folder and create the file `rehlds.cfg`. <br />Open it and fill it with these parameters [^1], which brings the engine exactly ReHLDS. And add a line, which will be displayed in the console when reading the config.
 ```
 echo Executing ReHLDS Configuration File
 
-// Конфигурационный файл для ReHLDS
+// Configuration file for ReHLDS
 
-// Автоматически подгружать звуки, используемые в v_* моделях
-sv_auto_precache_sounds_in_models "0"
+// Automatically load sounds used in v_* models
+sv_auto_precache_sounds_in_models "0".
 
-// Загружать пользовательские спреи после входа в игру, а не при подключении. Это увеличивает скорость загрузки
+// Load custom sprays after logging into the game, not when connected. This increases loading speed
 sv_delayed_spray_upload "1"
 
-// Выводить в консоль попытки использования неизвестных команд
+//Put an attempt to use unknown commands into the console
 sv_echo_unknown_cmd "1" 
 
-// Позволяет отключить логирование пароля RCON
+// Allows to disable RCON password logging
 sv_rcon_condebug "0"
 
-// Исправлять застревание на передвижной платформе/энтити. (Глобальная проблема на DeathrunMod и на картах с транспортом эвакуации)
+// Fixes getting stuck on a moving platform/anti. (Global problem on DeathrunMod and on maps with escape vehicles)
 sv_force_ent_intersection "0"
 
-// Принудительно выставить клиентский квар cl_dlmax 1024. Позволяет избежать чрезмерной фрагментации пакетов
+// Forcibly set client quar cl_dlmax to 1024. Helps to avoid excessive fragmentation of packets
 sv_rehlds_force_dlmax "1"
 
-// Устанавливает размер энтити по центру
+// Sets the size of the entity in the center
 sv_rehlds_hull_centering "0"
 
-// Отправлять mapcycle.txt в сообщении serverinfo (Не используется на клиенте)
+// Send mapcycle.txt in the serverinfo message (Not used on the client)
 sv_rehlds_send_mapcycle "0"
        
-// Исправляет ошибку с анимациями модели игрока, когда игрок имеет присоединенные объекты (aiments). Может вызвать отставание анимации, когда cl_updaterate низка
+// Fixes bug with player model animations when player has objects attached (aiments). May cause animation lag when cl_updaterate is low
 sv_rehlds_attachedentities_playeranimationspeed_fix "0"
 
-// Ограничить количество подключений с одного IP-адреса
+//limit the number of connections from one IP address
 sv_rehlds_maxclients_from_single_ip "5"
 
-// Позволяет использовать свой список энтити для карт. Файл с энтити находится по адресу "maps/[map name].ent")
-// 0 - использовать исходные энтити.
-// 1 - использовать файлы .ent из каталога карт.
-// 2 - использовать файлы .ent из каталога карт и создать новый файл .ent, если он отсутствует.
+// Allows you to use your own list of entities for cards. Entity file is located at "maps/[map name].ent")
+// 0 - use the original enti.
+// 1 - use .ent files from the maps directory.
+// 2 - use .ent files from the maps directory and create a new .ent file if it is absent.
 sv_use_entity_file "0"
 
-// Функция локального игрового времени, которая уменьшает лаги, если у вас долго запущена одна и та же карта
+// Local game time function, which reduces lag if you have the same map running for a long time
 sv_rehlds_local_gametime "0"
 
-// Максимальный средний уровень «move» команд для бана
+// Maximum average "move" commands for the ban
 sv_rehlds_movecmdrate_max_avg "400"
  
-// Время в минутах, на которое игрок будет забанен (0 - навсегда, отрицательное число - кикнуть)
+// Time in minutes for which the player will be banned (0 - forever, negative number - kick)
 sv_rehlds_movecmdrate_avg_punish "-1"
 
-// Максимальное отклонение уровня «move» команд для бана
+// maximum deviation of the "move" commands for the ban
 sv_rehlds_movecmdrate_max_burst "2500"
 
-// Время в минутах, на которое игрок будет забанен (0 - навсегда, отрицательное число - кикнуть)
+// Time in minutes for which the player will be banned (0 - forever, negative number - kick)
 sv_rehlds_movecmdrate_burst_punish "-1"
 
-// Максимальный средний уровень «string» команд для бана
+// maximum average level of "string" commands for the ban
 sv_rehlds_stringcmdrate_max_avg "80"
 
-// Время в минутах, на которое игрок будет забанен (0 - навсегда, отрицательное число - кикнуть)
+// Time in minutes for which the player will be banned (0 - forever, negative number - kick)
 sv_rehlds_stringcmdrate_avg_punish "-1"
 
-// Максимальное отклонение уровня «string» команд для бана
+// maximum deviation of "string" commands for the ban
 sv_rehlds_stringcmdrate_max_burst "400"
 
-// Время в минутах, на которое игрок будет забанен (0 - навсегда, отрицательное число - кикнуть)
+// Time in minutes for which the player will be banned (0 - forever, negative number - kick)
 sv_rehlds_stringcmdrate_burst_punish "-1"
 
-// setinfo поля которые будут переданы клиентам от сервера.
-// Если значение не установлено, то все поля будут переданы, за исключением приставки с подчеркиванием (к примеру _ah). Каждый ключ должен начинаться на слеш.
-// Например "/name/model/*sid/*hltv/bottomcolor/topcolor"
-// Больше информации: https://github.com/dreamstalker/rehlds/wiki/Userinfo-keys
+// setinfo fields to be passed to clients from the server.
+// If not setinfo, all fields will be transmitted, except the prefix with an underscore (e.g. _ah). Each key must begin with a slash.
+// For example "/name/model/*sid/*hltv/bottomcolor/topcolor"
+// More information: https://github.com/dreamstalker/rehlds/wiki/Userinfo-keys
 sv_rehlds_userinfo_transmitted_fields ""
 
-// Если включено, сервер будет устанавливать дополнительное случайное число независимо от клиента. Используется для того чтобы сломать norecoil в читах.
+// If enabled, the server will set an additional random number independently of the client. Used to break norecoil in cheats.
 sv_usercmd_custom_random_seed "0"
 ```
-Теперь открываем `server.cfg` и добавляем в самый конец такие строки:
+
+Now open `server.cfg` and add the following lines at the bottom:
 ```
 // Execute ReHLDS Config
 exec "rehlds.cfg"
 ```
-Готово!
+Finished!
 
-***Примечание***:
-Если вы будете устанавливать ReGameDLL (следующий шаг), чтение конфига ReHLDS лучше добавить в его конфиг - `game.cfg`. 
-Так же при обновлении ReGameDLL, если вы обновляете его конфиг, не забывайте и про строчки с конфигом ReHLDS.
+***Note***:
+If you are going to install ReGameDLL (the next step), it is better to add reading of ReHLDS config to its config - `game.cfg`. 
+Also when updating ReGameDLL, if you update its config, don't forget about the lines with the ReHLDS config as well.
 
-### Установка ReGameDLL
-Далее поставим ReGameDLL.
-Повторяем предыдущие действия, скачиваем последний релиз с GitHub: [Releases · s1lentq/ReGameDLL_CS (github.com)](https://github.com/s1lentq/ReGameDLL_CS/releases).
-Выключаем сервер, заменяем файлы в корне сервера, включаем обратно. Проверяем свои действия командой в консоли `game version`.
-На текущий момент увидим следующее:
+### Installing ReGameDLL
+Next, let's install ReGameDLL./etc/nginx/sites-available
+Repeat the previous steps, download the latest release from GitHub: [Releases - s1lentq/ReGameDLL_CS (github.com)](https://github.com/s1lentq/ReGameDLL_CS/releases).
+Turn off the server, replace the files in the root of the server, turn it back on. Check your actions with the `game version` command in the console.
+At the moment we will see the following:
 ```
 ReGameDLL version: 5.21.0.540-dev
 Build date: 17:33:16 Oct 25 2021
 Build from: https://github.com/s1lentq/ReGameDLL_CS/commit/b9cccc6
 ```
-Сразу, не отходя от кассы, можно настроить под свой сервер конфиг `game.cfg`, отвечающий за геймплей на сервере.
-Не стану разбирать его здесь, потому что, во-первых, это потребует целой отельной статьи, во-вторых, это слишком индивидуально от сервера к серверу и в-третьих, в нём уже имеются подписи к каждому квару.
+Immediately, without leaving the box, you can configure for your server config `game.cfg `, which is responsible for gameplay on the server.
+I will not disassemble it here, because, firstly, it would require a whole separate article, and secondly, it is too individual from server to server, and thirdly, it already has a signature for each quara.
 
-Не забывайте добавить в `game.cfg` чтение конфига ReHLDS из предыдущего шага.
+Don't forget to add in `game.cfg` reading the ReHLDS config from the previous step.
 
-### Установка Metamod
-Мы будем использовать Metamod-r, поскольку эта версия содержит множество оптимизаций и исправлений, а так же полностью совместима с ReHLDS.
+### Installing Metamod
+We are going to use Metamod-r because this version is a lot of optimizations, fixes and is fully compatible with ReHLDS.
 
-Переходим по ссылке: [Releases · theAsmodai/metamod-r (github.com)](https://github.com/theAsmodai/metamod-r/releases) и скачиваем последний доступный релиз.
+Go to the link: [Releases - theAsmodai/metamod-r (github.com)](https://github.com/theAsmodai/metamod-r/releases) and download the latest available release.
 
-Загружаем в папку cstrike папку addons из архива, и переходим в неё, а далее в папку `/metamod`. Удаляем файл `metamod.dll`, поскольку он предназначен для Windows.
-Здесь же создаём файл `plugins.ini` - он понадобится нам для установки дополнений.
+Create a directory called addons underneath of cstrike and upload the metamod-folder.
+Upload to the cstrike folder addons from the archive, and go to it, and then to the folder `/metamod`. Delete the file `metamod.dll`, because it is designed for Windows.
+Here we also create a file `plugins.ini` - we will need it to install add-ons.
 
-Теперь активируем Metamod, для этого вернёмся в папку cstrike, в которой ищем файл `liblist.gam` и открываем его вашим текстовым редактором. 
-Нас интересует параметр `gamedll_linux`.
-Заменяем его значение на путь до .so-файла Metamod.
-`gamedll_linux "dlls/cs.so"` -> `gamedll_linux "addons/metamod/metamod_i386.so"`
-Перезагружаем сервер.
+Now enable Metamod, to do this we return to the folder `cstrike` and look for the file `liblist.gam`, open it with your text editor.
+We are interested in the parameter `gamedll_linux` - replace its value to the path to the Metamod .so-file:
+`gamedll_linux "addons/metamod/metamod_i386.so"`
 
-На этом установка Metamod завершена.
-Заходим в консоль и убеждаемся в том, что он работает, введя команду `meta version`.
-На момент написания статьи вы должны получить вот такой вывод:
+Reboot the server.
+
+This completes the installation of Metamod.
+Go to the console and make sure it works by entering the command `meta version`.
+At the time of writing you should get this output:
 ```
 Metamod-r v1.3.0.128, API (5:13)
 Metamod-r build: 17:47:54 Aug 24 2018
 Metamod-r from: https://github.com/theAsmodai/metamod-r/commit/0cf2f70
 ```
 
-### Установка AmxModX
-Здесь у вас есть выбор: ставить стабильную ветку разработки (версия 1.9.0) или же экспериментальную (1.10.0), куда вносится новый функционал.
-Лично я рекомендую 1.9.0, поскольку если вы не знакомы со скриптингом под AmxModX, версия 1.10.0 не даст вам абсолютно никаких преимуществ.
+### Installing AmxModX
+Here you have a choice: put the stable development branch (version 1.9.0) or experimental (1.10.0) where new functionality is introduced.
+Personally I recommend 1.9.0, because if you are not famillary with AmxModX scripting, 1.10.0 version will not give you any benefits at all.
 
-Итак, переходим по ссылке: [AMX Mod X - Half-Life Scripting for Pros!](https://www.amxmodx.org/downloads-new.php).
-Находим самый последний билд, вверху таблицы, нажимаем на значок Linux, и скачиваем там **Base Package**, а так же **Counter-Strike**.
-Открываем оба архива, и загружаем в папку cstrike папку addons из них, сначала из Base Package, потом из Counter-Strike, соглашаясь на замену файлов.
+So, go to the link: [AMX Mod X - Half-Life Scripting for Pros!](https://www.amxmodx.org/downloads-new.php).<br />
+Find the latest build, at the top of the table, click on the Linux icon, and download there **Base Package**, as well as **Counter-Strike**.
+Open both archives, and download the addons folder from them into the cstrike folder, first from Base Package, then from Counter-Strike, agreeing to swap files.
 
-Открываем ранее созданный нами файл со списком плагинов для Metamod по пути: `addons/metamod/plugins.ini` и добавляем туда следующую строчку:
+Open the previously created by us file with a list of plugins for Metamod at the path: `addons/metamod/plugins.ini` and add there the following line:
 ```
 linux addons/amxmodx/dlls/amxmodx_mm_i386.so
 ```
-Сохраняем и перезапускаем сервер.
+Save and restart the server.
 
-Заходим в консоль и убеждаемся, в том что AmxModX работает, введя команду `meta list`. В списке должна быть такая надпись:
+Go into the console and make sure that AmxModX working by typing the command `meta list`. In the list should be an inscription like this:
 ```
-[ 1] AMX Mod X     RUN   -    amxmodx_mm_i386.so        v1.9.0.5293  ini  Start ANY
+[1] AMX Mod X RUN - amxmodx_mm_i386.so v1.9.0.5293 ini Start ANY
 ```
-Если она есть, значит мы всё сделали правильно, и можно переходить к следующему шагу.
+If it's there, it means we've done everything right and we can move on to the next step.
 
-#### (Опционально) Проверка дампов падений сервера
-Здесь же можно сразу проверить, правильно ли мы настроили показ дампов падений сервера.
+#### (Optional) Checking server crash dumps
+Here you can also check if we have set up the display of server crash dumps correctly.
 
-Создаём новый файл в любом месте у нас на компьютере и называем его, например, `crash_test.sma`. Открываем его текстовым редактором и копируем туда следующий код:
+Create a new file in any location on our computer and name it, for example, `crash_test.sma`. Open it with a text editor and copy there the following code:
 ```
-#include <amxmodx>
+#include <amxmodx
 #include <fakemeta>
 
 public plugin_init()
 {
     register_plugin("Crash", "1.0", "Dev-CS Team");
 
-    // Generate exception code 0xC0000005
+    //Generate exception code 0xC0000005
     set_task(1.0, "GenerateExceptionCode");
 }
 
@@ -545,59 +552,60 @@ public GenerateExceptionCode()
 {
     server_print("[Crash]: I call segmentation fault! Exception code: 0xC0000005");
 
-    // Put invalid pointer that will be generate access violation exception
+    // Put invalid pointer that will generate access violation exception
     set_tr2(0xDEADBEEF, TR_InWater, true);
 }
 ```
-Сохраняем.
+Save.
 
-Далее у нас есть два пути: скомпилировать файл на Windows или на Linux.
-Те, кто умеет компилировать плагины на Windows, могут скомпилировать его и переходить к следующему шагу с установкой.
+Next we have two options: compile the file on Windows or on Linux.
+Those who know how to compile plugins on Windows can compile it and move on to the next step with installation.
 
-Для остальных я вкратце расскажу, как скомпилировать плагин на Linux.
-Полная статья: [Локальное компилирование плагинов | Dev-CS.ru](https://dev-cs.ru/threads/246/)
+For others, I will briefly explain how to compile a plugin on Linux.
+Full article: [Local Compilation of Plugins | Dev-CS.ru](https://dev-cs.ru/threads/246/)
 
-В FileZilla идём по пути `serverfiles/cstrike/addons/amxmodx/scripting`.
-Загружаем сюда наш файл `crash_test.sma`.
-Находим файл `amxxpc`, кликаем на него правой кнопкой мыши и выбираем пункт *Права доступа к файлу*. В поле для ввода вписываем права `754` -> OK.
+In FileZilla go to `serverfiles/cstrike/addons/amxmodx/scripting`.
+Upload our `crash_test.sma` file here.
+Find the file `amxxpc`, right-click on it and select *File permissions*. In the input field, type in the rights `754` -> OK.
 
-Открываем PuTTY. Теперь нам надо убедться, что мы в корневой папке пользователя, командой:
+Open PuTTY. Now we have to check that we are in the root folder of a user, with a command:
 ```
 cd
 ```
-Далее переходим в папку, куда мы поместили исходник плагина с краш-тестом:
+Next, go to the folder where we put the source code of the crash test plugin:
 ```
 cd serverfiles/cstrike/addons/amxmodx/scripting
 ```
-Запускаем компиляцию:
+Run the compilation:
 ```
 ./amxxpc crash_test.sma
 ```
-Если вы увидели такой вывод на экран, значит вы сделали всё правильно:
+If you see this output on the screen, then you've done everything right:
 ```
 AMX Mod X Compiler 1.9.0.5293
 Copyright (c) 1997-2006 ITB CompuPhase
 Copyright (c) 2004-2013 AMX Mod X Team
 
-Header size:            300 bytes
-Code size:              288 bytes
-Data size:              456 bytes
-Stack/heap size:      16384 bytes
-Total requirements:   17428 bytes
+Header size: 300 bytes
+Code size: 288 bytes
+Data size: 456 bytes
+Stack/heap size: 16384 bytes
+Total requirements: 17428 bytes
 Done.
 ```
-Не забывайте снова вернуться в корневую папку пользователя командой `cd`.
+Do not forget to go back to the user's root folder with the `cd` command.
 
-Дальше разворачиваем опять FileZilla, находим в той же папке scripting наш новый файл `crash_test.amxx` (не .sma!) и перетаскиваем его на две точки вверху, чтобы переместить в директорию выше.
+Next, expand FileZilla again, find in the same folder scripting our new file `crash_test.amxx` (not .sma!) and drag it to the two dots above to move it to the directory above.
 
-Следуем стандартной процедуре установки плагинов: перетаскиваем файл в папку plugins, переходим в папку configs, находим там файл `plugins.ini` и вставляем в самый конец: `crash_test.amxx`. Сохраняем.
+Follow the standard plugin installation procedure: drag the file to the plugins folder, go to the configs folder, find the file `plugins.ini` there and paste at the very end: `crash_test.amxx`. Save it.
 
-Теперь перезагрузим наш сервер и посмотрим, что получилось. В терминале выполняем: `./csserver r`.
-***Не забудьте*** сразу отключить плагин краш-теста сервера! Закомментируйте или удалите его название в `plugins.ini`.
+Now reboot our server and see what happens. In the terminal run: `./csserver r'.
+***Don't forget to immediately disable the crash test plugin! Comment out or delete its name in `plugins.ini`.
 
-Разворачиваем FTP и переходим в папку serverfiles. Здесь ищем файл `debug.log` и открываем его.
-Если вы видите примерно такое содержание:
+Deploy FTP and go to the folder serverfiles. Here look for the file `debug.log` and open it.
+If you see something like this content:
 ```
+
 ----------------------------------------------
 CRASH: Sat 16 Oct 2021 07:27:08 AM MSK
 Start Line: ./hlds_linux -game cstrike -strictportbind +ip 0.0.0.0 -port 27015 +clientport 27005 +map de_dust2 +servercfgfile server.cfg -maxplayers 16 -pingboost 3 -debug -pidfile hlds.5833.pid
@@ -640,6 +648,7 @@ From        To          Syms Read   Shared Object Library
 0xf2702b60  0xf274a624  Yes (*)     cstrike/addons/amxmodx/modules/hamsandwich_amxx_i386.so
 0xf2671120  0xf2677404  Yes (*)     cstrike/addons/amxmodx/modules/csx_amxx_i386.so
 0xf262f9d0  0xf265bd6c  Yes (*)     cstrike/addons/amxmodx/modules/fakemeta_amxx_i386.so
+
 0xf0328000  0xf18468a4  Yes (*)     ./steamclient.so
 0xf2260670  0xf22d6020  Yes (*)     ./crashhandler.so
 0xf24db300  0xf24e1cd4  Yes (*)     /lib/i386-linux-gnu/libnss_files.so.2
@@ -656,8 +665,8 @@ Stack level 0, frame at 0xff9c4734:
 End of crash report
 ----------------------------------------------
 ```
-Значит у вас всё получилось.
-В противном случае вы увидите урезанный краш-лог:
+Then you have succeeded.
+Otherwise you'll see a truncated crashlog:
 ```
 ----------------------------------------------
 CRASH: Wed 13 Oct 2021 09:16:04 PM MSK
@@ -665,159 +674,159 @@ Start Line: ./hlds_linux -game cstrike -strictportbind +ip 0.0.0.0 -port 27015 +
 End of crash report
 ----------------------------------------------
 ```
-Попробуйте перечитать и выполнить заново шаг с активацией полных краш-логов.
+Try re-reading and re-executing the step with full crash logs activated.
 
-##### Литература
-- [Как получить Dump падения HLDS | Dev-CS.ru](https://dev-cs.ru/threads/1532/)
-- [Локальное компилирование плагинов | Dev-CS.ru](https://dev-cs.ru/threads/246/)
+##### Literature
+- [How to get Dump of HLDS drop | Dev-CS.ru](https://dev-cs.ru/threads/1532/)
+- [Local compilation of plugins | Dev-CS.ru](https://dev-cs.ru/threads/246/)
 
-### Настройка быстрой загрузки файлов
-Итак, для полноценной работы сервера нам необходимо настроить быструю загрузка файлов (FastDL).
-В противном случае, если у вас не стандартный сервер с дополнительными ресурсами, никто не захочет качать их по 10 минут.
+### Configuring fast downloads
+So, to make our server work properly we need to set up fast file uploads (FastDL).
+Otherwise, unless you have a standard server with extra resources, nobody wants to download them for 10 minutes.
 
-Начнём с установки веб-сервера Nginx. Пишем:
+Let's start by installing the Nginx web server. Let's write:
 ```
 sudo apt install nginx
 ```
-После установки он автоматически начнёт свою работу. Проверить это можно зайдя на адрес нашего сервера в браузере. Если вы видите страницу с текстом: `# Welcome to nginx!`, значит всё прошло успешно. 
+After installation it will automatically start. You can check this by going to our server address in your browser. If you see a page with the text: `# Welcome to nginx! 
 
-Теперь перейдён к конфигурации Nginx под сервер быстрой загрузки.
-Для этого заходим под root пользователем через FileZilla, и идём по следующему пути: `/etc/nginx/sites-available`. Здесь будет находиться файл конфига nginx по умолчанию (`default`).
-Открываем его для редактирования. В разделе **server**, перед закрывающей скобкой '}', вставляем следующее:
+Now move on to configuring Nginx for the fast server.
+To do this, log in as root user via FileZilla, and go to the following path:<br /> `/etc/nginx/sites-available`. Here will be the default nginx config file (`default`).
+Open it for editing. In the section **server**, before closing bracket '}' insert the following:
 ```
-	# Быстрая загрузка для Counter-Strike
+	# Fast load for Counter-Strike
 	location /cstrike/ {
-		alias   /home/public_server/serverfiles/cstrike/;
+		alias /home/public_server/serverfiles/cstrike/;
 		autoindex on;
 
-		location ~* (\.wad$|(maps|sprites|models|gfx|sound|media|overviews)/.*(bsp|mdl|spr|wav|mp3|bmp|tga|txt|res)$) {
+		location ~* (\.wad$||(maps|sprites|models|gfx|sound|media|overviews)/.*(bsp|mdl|spr|wav||mp3|bmp|tga|txt||res)$) {
 			allow all;
 		}
 
 		deny all;
 	}
 ```
-Где `/home/public_server/serverfiles/cstrike/` - это путь до папки cstrike на нашем сервере. Проверьте его и исправьте на свой вариант, если он отличается.
-Сохраняем этот файл и проверяем его на корректность. Для этого нам понадобится такая команда:
+Where `/home/public_server/serverfiles/cstrike/` is the path to the cstrike folder on our server. Check it and correct it to your version if it's different.
+Save this file and make sure it is correct. To do this, we will need this command:
 ```
 sudo nginx -t
 ```
-Если мы получили сообщение, что все конфиги в порядке, перезагружаем Nginx:
+If we get a message that all configs are OK, restart Nginx:
 ```
-sudo service nginx restart
+`` sudo service nginx restart
 ```
-Теперь можно проверить, что у нас получилось. Снова открываем браузер, заходим на наш веб сервер и пытаемся скачать какой-нибудь файл, например карту **de_dust2**.
+Now, we can check what we have done. Open the browser again, go to our web server and try to download some file, for example the map **de_dust2**.
 ```
-http://адрес_сервера/fastdl/maps/de_dust2.bsp
+http://SERVER_ADDRESS/fastdl/maps/de_dust2.bsp
 ```
-Если она скачалась, значит вы всё сделали правильно!
+If it downloaded, then you did everything right!
 
-Теперь откроем конфиг игрового сервера (**server.cfg**) и добавим туда следующие квары:
+Now open the game server config (**server.cfg**) and add the following cvars there:
 ```
 sv_allowdownload 1
-sv_downloadurl "http://адрес_сервера/fastdl/"
+sv_downloadurl "http://SERVER_ADDRESS/fastdl/"
 ```
 
-На этом основная настройка сервера завершена!
+This completes the basic configuration of the server!
 
-#### Литература
-- [Как установить LEMP на Debian 9 – База знаний Timeweb Community](https://timeweb.com/ru/community/articles/kak-ustanovit-lemp-na-debian-9-1)
-- [Правильная настройка FastDL на VDS (c-s.net.ua)](https://c-s.net.ua/forum/topic67228s60.html#entry1045699)
+#### Literature
+- [How to install LAMP on Debian 11](https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mariadb-php-lamp-stack-on-debian-11)
+- [Configuring FastDL correctly on Vserver (c-s.net.ua)](https://c-s.net.ua/forum/topic67228s60.html#entry1045699)
 
-## Часть 4. Дополнительные инструменты для сервера. Рекомендации
+## Part 4. Additional tools for the server. Recommendations
 
-### Установка и настройка Reunion
-Наиболее вероятно, к вам на сервер будут заходить игроки с пиратской копией игры (Non-steam). Возможно, даже вы сами. Однако, они не смогут подключиться к серверу без специального модуля, обеспечивающего игру на сервере для пиратских клиентов.
+### Installing and configuring Reunion
+It is most likely that you will be visited by players with a pirated copy of the game (Non-steam). It may even be you yourself. However, they will not be able to connect to the server without a special module, which provides the game on the server for pirate clients.
 
-Скачать Reunion можно отсюда:
-- [CS.RIN.RU - Steam Underground Community • Просмотр темы - Reunion 0.1.92 - no-steam for ReHLDS](https://cs.rin.ru/forum/viewtopic.php?f=29&t=69235)
+You can download Reunion from here:
+- [CS.RIN.RU - Steam Underground Community - Topic Overview - Reunion 0.1.92 - no-steam for ReHLDS](https://cs.rin.ru/forum/viewtopic.php?f=29&t=69235)
 - [addons Reunion | Dev-CS.ru](https://dev-cs.ru/resources/68/)
 
-Требуется регистрация, но зато это надёжные источники, за которые я могу поручиться.
-На момент написания статьи стабильная версия - 0.1.92d.
+Requires registration, but it's a reliable source, which I can vouch for.
+At the time of writing this article the stable version is 0.1.92d.
 
-Помещаем бинарный файл `reunion_mm_i386.so` по пути `addons/reunion/`, затем прописываем в файле Metamod-плагинов:
+Place binary file `reunion_mm_i386.so` on path `addons/reunion/`, then write in Metamod-plugins file:
 ```
 linux addons/reunion/reunion_mm_i386.so
 ```
-После этого помещаем файл конфигурации `reunion.cfg` из архива в папку cstrike.
+After that put the configuration file ``reunion.cfg`` from the archive into the folder cstrike.
 
-**Важно!**:
-Reunion должен быть на первом месте в списке meta плагинов.
+**Important**!<br />
+Reunion must be at the first place in the list of meta plugins.
 
-**Важно!**:
-Даже если вы не собираетесь проводить глубокую настройку Reunion, настоятельно рекомендуется задать "соль". Это нужно, чтобы чтобы никто не мог взять SteamID другого игрока.
-Находим в конфиге строку `SteamIdHashSalt` и вписываем туда набор из случайных символов длиной не менее 16-ти знаков.
+**Important!**:<br />
+Even if you don't intend to do a deep setup of Reunion, it is highly recommended to set "salt". This is necessary so that no one can take the SteamID of another player.
+Find the line `SteamIdHashSalt` in the config and enter there a set of random characters with a length of at least 16 characters.
 
-Перезапускаем сервер, чтобы модуль начал свою работу.
-Теперь убедимся, что он работает. В консоли сервера пишем уже знакомую нам команду `meta list`. Reunion должен иметь статус **RUN**:
+Restart the server for the module to start its work.
+Now we will make sure that it works. In the server console, we will write the familiar command `meta list`. Reunion must have a status of **RUN**:
 ```
 Currently loaded plugins:  
 description stat pend file vers src load unlod  
-[ 1] Reunion RUN - reunion_mm_i386.so vX.X.X ini Start Never
+[ 1 ] Reunion RUN - reunion_mm_i386.so vX.X.X ini Start Never
 ```
 
-На этом установка завершена. 
+This completes the installation. 
 
-**Важно!**:
-По более тонкой настройке Reunion есть отличный гайд по этой ссылке: [Подмена SteamID | Dev-CS.ru](https://dev-cs.ru/threads/808/)
-Если вы собираетесь содержать выделенный сервер для всех, а не просто поиграть с друзьями или ботами, я рекомендую выполнить настройку по статье выше.
+**"Important!"**:<br />
+For more fine-tuning Reunion, there's an excellent guide at this link: [SteamID Switching | Dev-CS.ru](https://dev-cs.ru/threads/808/) <br />
+If you're going to maintain a dedicated server for everyone, and not just play with friends or bots, I recommend doing the setup from the article above.
 
-### Установка компонентов веб-сервера
-Большинство серверодержателей наверняка захотят установить CSBans или другие веб-дополнения. Я расскажу, как установить основные необходимые для этого инструменты: PHP и MySQL.
+### Installing web server components
+Most server owners will probably want to install CSBans or other web add-ons. The basic tools you need to accomplish this are: PHP and MySQL.
 
-#### Установка MariaDB
-Начнём мы с установки СУБД[^2].
+#### Installing MariaDB
+We will start by installing MariaDB[^2].
 
-Вводим команду:
+We enter the command:
 ```
 sudo apt install mariadb-server
 ```
-После установки необходимо произвести конфигурацию командой:
+After installing, we need to do the configuration with the command:
 ```
 sudo mysql_secure_installation
 ```
-Сейчас нам предложат указать пароль для root пользователя MariaDB, если он был уже указан. Посльку мы только установили эту СУБД, оставляем поле пустым и жмём enter.
+Now we will be asked to specify the password for the root user MariaDB, if it was already specified. Since we have just installed this DBMS, leave the field blank and hit enter.
 
-В некоторых случаях на текущем этапе система может предложить переключиться на unix_socket аутентификацию (`Switch to unix_socket authentication [Y/n]`). Отклоняем.
-Теперь нам предложат сменить пароль для root пользователя (`Change the root password? [Y/n]`). Соглашаемся и задаём свой пароль.
+In some cases at this point, the system may offer to `switch to unix_socket authentication [Y/n]`
+. Override.
+Now we will be asked to change the root password (`Change the root password? [Y/n]`). We will agree and set our own password.
 
-В ином случае, если вам будет сразу предложено задать пароль для root пользователя (`Set root password? [Y/n]`), соглашайтесь и задайте его.
+Otherwise, if you are prompted for a root password (`Set root password? [Y/n]`), accept and set it.
 
-Далее идёт стандартная процедура настройки, система предложит удалить анонимных пользователей, отключить удалённый доступ к root пользователю, удалить тестовую базу данных и перезагрузить таблицу привелегий. Во всех вариантах можете выбрать **Y**.
+Next is the standard setup procedure, the system will ask you to remove anonymous users, disable remote root access, delete the test database and reload the privilege table. In all variants you can choose **Y**.
 
-На этом установка завершена.
+This completes the installation.
 
-Но теперь нам необходимо создать нового пользователя MySQL чтобы использовать его из-под игрового сервера.
-Заходим в нашу базу данных под root пользователем:
+But now we need to create a new MySQL user to use it from under the game server.
+Log in to our database as a root user:
 ```
 mysql -u root -p
 ```
-Теперь создадим пользователя (admin - логин и password - пароль укажите свои):
-```sql
+Now create a user (admin - login and password - specify your own):
+```
 CREATE USER 'admin'@'localhost' IDENTIFIED BY 'password';
 ```
-Затем выдадим этому пользователю все привилегии:
-```sql
+Then give this user all privileges:
+```
 GRANT ALL PRIVILEGES ON * .* TO 'admin'@'localhost';
 ```
-И пишем `exit` для выхода из БД.
+And write `exit` to exit the database.
 
-На этом установка базы данных завершена!
+This completes the installation of the database!
+##### Literature
+- [How to Install MariaDB Database in Debian 11 (digitalocean.com)](https://www.digitalocean.com/community/tutorials/how-to-install-mariadb-on-debian-11)
 
-##### Литература
-- [How to Install MariaDB Database in Debian 10 (tecmint.com)](https://www.tecmint.com/install-mariadb-database-in-debian-10/)
+#### Installing PHP
+This will barely take you any time at all because PHP does not need any extra configuration.
 
-#### Установка PHP
-Данное действие почти не займёт у вас времени, поскольку PHP не нуждается в дополнительной настройке.
-
-Вводим в консоль:
+Type it into the console:
 ```
 apt install php-fpm php-mysql
 ```
-На этом установка завершена. Но на всякий случай проверим, всё ли в порядке.
-Переходим в FileZilla по следующему пути: `/var/www/html`.
-Здесь создаём файл `info.php`. Открываем его и вставляем туда следующее содержание:
+This completes the installation. But just in case, check everything is in order.
+Go to FileZilla under the following path: `/var/www/html`.
+Here we create the file `info.php`. Open it and insert the following content:
 ```
 <?php
 
@@ -825,48 +834,47 @@ apt install php-fpm php-mysql
 
 ?>
 ```
-Сохраняем.
+Save.
 
-В браузере переходим по адресу нашего файла, т.е.: `http://адрес_сервера/info.php`.
-Если вы видите страницу с конфигурацией php, значит вы всё сделали правильно.
+In the browser we go to the address of our file, ie: `http://SERVER_ADDRESS/info.php`.
+If you see the page with the php configuration, then you have done everything correctly.
 
-##### Литература
-- [Как установить LEMP на Debian 9 – База знаний Timeweb Community](https://timeweb.com/ru/community/articles/kak-ustanovit-lemp-na-debian-9-1)
+##### Literature
+- [How to install LAMP on Debian 11](https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mariadb-php-lamp-stack-on-debian-11)
 
+#### (Optional) Installing Phpmyadmin
+If you don't need the MySQL database control panel, you can skip this step.
 
-#### (Опционально) Установка Phpmyadmin
-Если вам не нужна панель для управления базами данных MySQL, можете пропустить этот шаг.
-
-Для начала установим необходимые компоненты:
+First, let's install the necessary components:
 ```
 apt install php-mbstring mcrypt
 ```
-Теперь приступим к установке самой утилиты:
+Now proceed to install the utility itself:
 ```
 apt install phpmyadmin
 ```
-Сначала нам будет предложено выбрать сервер для работы с приложением. К сожалению, Nginx нет в списке, так что снимаем выбор с обеих строк и нажимаем ОК.
-Следующим шагом будет автоматическое создание баз данных для phpmyadmin, соглашаемся.
-После этого у нас попросят ввести пароль для пользователя phpmyadmin. Вводим.
+At first we will be asked to choose a server to work with the application. Unfortunately Nginx is not on the list, so deselect both and click OK.
+The next step will automatically create databases for phpmyadmin, we agree.
+After that, we will be asked to enter a password for the user phpmyadmin. Enter it.
 
-Затем нам понадобится включить расширение `mcrypt`, что мы и делаем:
+Then we need to enable the extension `mcrypt`, which we do:
 ```
 phpenmod mcrypt
 ```
-И последний шаг. Открываем уже знакомый нам конфиг Nginx по пути `/etc/nginx/sites-available`.
-Находим следующую строку:
+And the last step. Open the familiar Nginx config by going to `/etc/nginx/sites-available`.
+Find the following line:
 ```
 	# Add index.php to the list if you are using PHP
 	index index.html index.htm index.nginx-debian.html;
 ```
-Добавляем в этот список `index.php`. Должно получиться так:
+Add `index.php` to that list. It should look like this:
 ```
 	# Add index.php to the list if you are using PHP
-	index index.php index.html index.htm index.nginx-debian.html;
+	index.php index.html index.htm index.nginx-debian.html;
 ```
-Затем вставляем в конец общего раздела конфигурацию для phpmyadmin:
+Then we put the phpmyadmin config at the end of the shared section:
 ```
-	# Конфигурация для phpmyadmin
+	# phpmyadmin config
 	location /phpmyadmin {
 		alias /usr/share/phpmyadmin/;
 
@@ -878,68 +886,76 @@ phpenmod mcrypt
 			fastcgi_ignore_client_abort off;
 		}
 
-		location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
-			access_log    off;
-			log_not_found    off;
+		location ~* \.(js|css|png|jpg|jpeg||gif|ico)$ {
+			access_log off;
+			log_not_found off;
 			expires 1M;
 		}
 	}
 ```
-Сохраняем файл. Как обычно проверяем конфигурацию командой `nginx -t`, исправляем ошибки, если они есть. Перезагружаем Nginx.
-На этом всё!
+Save the file. As usual, check the configuration with the `nginx -t` command, fixing errors if any. Reboot Nginx.
+That's all!
 
-Теперь идём смотреть, что у нас получилось. В браузере переходим по ссылке: `http://адрес_сервера/phpmyadmin`. Если вы видите страницу входа в phpmyadmin, значит установка прошла успешно.
+Now let's go see what we have. In your browser we go to the link: `http://SERVER_ADDRESS/phpmyadmin`. If you see a login page to phpmyadmin then the installation was successful.
 
-##### Литература
-- [Как установить phpMyAdmin – База знаний Timeweb Community](https://timeweb.com/ru/community/articles/kak-ustanovit-phpmyadmin)
+##### Literature
+- [How to install phpMyAdmin on Debian 11](https://www.howtoforge.com/how-to-install-and-secure-phpmyadmin-on-debian-11/)
 
-#### (Опционально) Настройка автоматического резервного копирования баз данных
-Во избежание непредвиденных ситуаций, можно так же настроить бэкап баз данных MySQL.
+#### (Optional) Setting up automatic database backups
+To avoid unforeseen situations, you can also set up a MySQL database backup.
 
-Воспользуемся инструментом `mysqldump` и уже знакомым нам `crontab`.
+We will use the tool `mysqldump` and already familiar to us `crontab`.
 
-На мой взгляд, хранить резервные копии удобнее в директории сервера, поэтому надо перейти за того пользователя, у которого установлен сервер. У нас это `public_server`.
+In my opinion, it is more convenient to store backups in the directory server, so we have to go to the user who has the server. In our case this is `public_server`.
 
-Открываем редактор crontab и самый конец файла вписываем такую строку:
+Open the crontab editor and write the following line at the very end of the file:
 ```
-0 12 */7 * * mysqldump -u admin -ppassword -A > db.sql
+0 12 */7 * * * mysqldump -u admin -ppassword -A > db.sql
 ```
-Синтаксис:
+Syntax:
 ```
-mysqldump -u [пользователь mysql] -p[его пароль] -A > [название базы данных].sql
+mysqldump -u [mysql user] -p[his password] -A > [database name].sql
 ```
-Обратите внимание, что `-p` и последующий пароль пользователя пишутся слитно.
+Note that `-p` followed by the user's password is written together.
 
-О том, как настроить время в crontab, было описано в разделе "Настройка расписаний".
+How to configure the time in crontab was described in the "Configuring Schedules" section.
 
-В примере у нас получилось следующее: *Каждый седьмой день месяца (раз в неделю) в 12 часов дня будет создан дамп за mysql пользователя admin с паролем password и будет помещён в корневую папку пользователя, за которого запущен crontab (у нас это `public_server`), с названием db.sql*.
+In the example we have the following:<br /> *Every seventh day of the month (once a week) at 12 noon a dump will be created for mysql user admin with password password and placed in the root folder of the user for whom crontab is running (in our case it is `public_server`), named db.sql*.
 
-Можно помещать файл в каталог, но в таком случае он должен быть **заранее создан**. Пример команды:
+You can place the file in a directory, but in this case it must be **pre-created**. Example command:
 ```
 mysqldump -u admin -ppassword -A > mysql_backup/db.sql
 ```
 
-##### Литература
-- [Как сделать резервную копию базы/таблицы в MySQL (pc.ru)](https://pc.ru/articles/kak-sdelat-rezervnuyu-kopiyu-bazy-tablicy-v-mysql)
+#### (Optional 2) Setting up automatic database backups for all databases
+Install the automysqlbackup-package from Debian
+```
+sudo apt install automysqlbackup
+```
+These Backups will be automatically created daily in `/var/lib/automysqlbackup/`
 
-### Включение оповещений о некорректной работе сервера
-В LGSM так же можно включить оповещения о недоступности сервера, если команда `monitor` её выявила.
+##### Literature
+- [How to back up a database/table in MySQL](https://devanswers.co/backup-mysql-databases-linux-command-line/)
+- [How to backup automatically with automysqlbackup](https://serverpilot.io/docs/how-to-back-up-mysql-databases-with-automysqlbackup/)
 
-Есть довольно большой список мессенджеров и служб для оповещения, но они больше популярны на западе, чем в странах СНГ.
-Для нас можно выделить Email, Telegram и Discord. С полным списком можно ознакомиться здесь: [Alerts - LinuxGSM_](https://docs.linuxgsm.com/alerts).
+### Enabling alerts on server malfunction
+In LGSM it is also possible to turn on alerts if the `monitor` command detected server inaccessibility.
 
-Здесь я рассмотрю подключение к Telegram.
+There is quite a long list of messengers and services for alerts, but they are more popular in the West than in the CIS countries.
+For us, we can highlight Email, Telegram and Discord. The full list is available here: [Alerts - LinuxGSM_](https://docs.linuxgsm.com/alerts).
 
-#### Оповещения через Telegram
-Итак, первое, что нам нужно сделать, это создать бота в телеграме.
+Here I will look at the connection to Telegram.
 
-Переходим по этой ссылке [Telegram: Contact @BotFather](https://t.me/BotFather) или ищем в телеграме @BotFather, если он у вас не установлен на компьютере.
+#### Alerts via Telegram
+So, the first thing we need to do is to create a bot in Telegram.
 
-Запускаем этого бота и выполняем команду `/newbot`.
-Следуя инструкциям, задаём боту имя и никнейм. В результате у нас появится токен бота, который нам надо будет указать в настройках скрипта.
+Follow this link [Telegram: Contact @BotFather](https://t.me/BotFather) or search for @BotFather on Telegram if you don't have it installed on your computer.
 
-Открываем конфиг LGSM по уже знакомому нам пути:`lgsm/config-lgsm/csserver/csserver.cfg`.
-В самый конец добавляем:
+Launch this bot and run the `/newbot` command.
+Following the instructions, give the bot a name and nickname. As a result, we will have a bot token, which we will need to specify in the script settings.
+
+Open the LGSM config by the familiar path: `lgsm/config-lgsm/csserver/csserver.cfg`.
+At the very end we add:
 ```
 ## Notification Alerts
 # (on|off)
@@ -954,40 +970,40 @@ telegramalert="on"
 telegramtoken="token"
 telegramchatid="chatid"
 ```
-Итак, рассмотрим приведённые здесь параметры.
-- `postalert` - позволяет получить дополнительную информацию о сервере на момент неисправности и загружает её на Termbin, аналогично команде `./csserver postdetails`.
-- `telegramalert` - собственно, включить или нет оповещения в Telegram.
-- `telegramtoken` - сюда нужно вставить токен нашего нового бота.
-- `telegramchatid` - здесь надо указать индекс вашего с ботом чата. Об этом ниже.
+So let's look at the parameters listed here.
+- ``postalert`` - allows to get additional information about the server at the time of failure and uploads it to Termbin, similarly to the ``./csserver postdetails`` command.
+- `telegramalert` - actually enable or disable alerts in Telegram.
+- `telegramtoken` - insert the token of our new bot here.
+- `telegramchatid` - here you should specify the index of your chat with the bot. About this below.
 
-Вставляем полученный на предыдущем шаге индекс бота в параметр `telegramtoken`.
-Затем в браузере переходим по следующему пути:
+Insert the bot index obtained in the previous step in the `telegramtoken` parameter.
+Then in the browser is the following path:
 ```
 https://api.telegram.org/botXXXXXXXXX:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/getUpdates
 ```
-Где `XXXXXXXXX:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX` - заменяем на токен бота. Например:
+Where `XXXXXXXXXXX:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX - replace it with the bot token. For example:
 ```
 https://api.telegram.org/bot3104437352:AAE2XjHxOIBbfM2U1HStmcOkLdCTw5DJsjY/getUpdates
 ```
-Оставляем вкладку открытой.
+Leave tab open.
 
-Теперь пишем боту любое сообщение, например `LGSM test`. Затем обновляем страницу, и у нас должны появиться технические параметры сообщения.
-Ищем наше сообщение в конце строки и двигаемся к её началу, чтобы найти данные примерно такого вида: `"chat":{"id":845483018,`.
-Число `845483018` - это и будет индекс чата, который нам нужен. Копируем его и вставляем в параметр `telegramchatid`.
+Now write any message to the bot, for example ``LGSM test``. Then refresh the page and we should see the technical parameters of the message.
+Look for our message at the end of the line and go to the beginning to find data of this kind: `"chat":{"id":845483018,`.
+The number `845483018` - this will be the index of the chat we need. Copy it and paste it into the `telegramchatid` parameter.
 
-Закрываем конфиг и сохраняем его. На этом настройка оповещений завершена. 
+Close the config and save it. This configuration of notifications is complete. 
 
-Мы можем проверить их работоспособность. Для этого воспользуемся командой скрипта `./csserver test-alert`.
-В результате её выполнения нам в телеграм должен написать наш новый бот с тестовым оповещением.
+We can test their performance. To do this, use the script command `./csserver test-alert`.
+As a result of its execution our new bot with the test alert should write to us in Telegram.
 
-##### Литература
-- [Telegram - LinuxGSM_](https://docs.linuxgsm.com/alerts/telegram)
-***Примечание***: здесь же можно найти инструкцию о том, как подключить бота к группе, а не только к личному чату.
+##### Literature
+- [Telegram - LinuxGSM_](https://docs.linuxgsm.com/alerts/telegram) <br />
+***Note***: Here you will also find instructions on how to connect the bot to a group instead of just a private chat.
 
-***Примечание***: На момент написания статьи оповещение в телеграм выдаёт ошибку.
-Чтобы её исправить, я использовал код из предыдущего коммита в необходимом файле (`alert_telegram.sh`).
-Так же я отправил разработчикам баг-репорт. Надеюсь, в скором времени они исправят этот баг.
+***Note***: At the time of writing this article, the telegram alert is giving you an error.
+To fix it I used the code from the previous commit in the necessary file (`alert_telegram.sh`).
+I also sent a bug report to the developers. Hopefully they will fix it soon.
 
-# На этом всё. Удачи в создании сервера.
-[^1]: CVar - Console Variable, консольная переменная
-[^2]: СУБД - Система Управления Базами Даных
+# That will be all. Good luck creating a server.
+[^1]: CVar - Console Variable
+[^2]: DBMS - Database Management System
